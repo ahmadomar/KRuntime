@@ -71,7 +71,6 @@ bool GetTrustedPlatformAssembliesList(WCHAR* szDirectory, bool bNative, LPWSTR p
         CHECK_RETURN_VALUE_FAIL_EXIT_VIA_FINISHED_SETSTATE(errno, ret = false);
     }
 
-
 Finished:
     if (ppszTpaAssemblyNames != nullptr)
     {
@@ -245,7 +244,7 @@ HMODULE LoadCoreClr()
 
 Finished:
     return hCoreCLRModule;
-}
+    }
 
 
 /*
