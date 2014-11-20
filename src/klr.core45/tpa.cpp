@@ -100,7 +100,6 @@ BOOL CreateTpaBase(LPWSTR** ppNames, size_t* pcNames, bool bNative)
     return true;
 }
 
-
 BOOL FreeTpaBase(const LPWSTR* values, const size_t count)
 {
     for (size_t idx = 0; idx < count; ++idx)
