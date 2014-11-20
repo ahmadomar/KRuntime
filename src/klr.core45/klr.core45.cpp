@@ -244,7 +244,7 @@ HMODULE LoadCoreClr()
 
 Finished:
     return hCoreCLRModule;
-    }
+}
 
 
 /*
@@ -493,8 +493,6 @@ extern "C" __declspec(dllexport) bool __stdcall CallApplicationMain(PCALL_APPLIC
         property_keys,
         property_values,
         &domainId);
-
-    wprintf_s(pwszTrustedPlatformAssemblies);
 
     if (FAILED(hr))
     {
