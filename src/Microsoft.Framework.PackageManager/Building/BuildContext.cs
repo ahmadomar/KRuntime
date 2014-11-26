@@ -17,27 +17,25 @@ namespace Microsoft.Framework.PackageManager
         private readonly string _outputPath;
         private readonly ApplicationHostContext _applicationHostContext;
 
-        public BuildContext(ICache cache, ICacheContextAccessor cacheContextAccessor, Runtime.Project project, FrameworkName targetFramework, string configuration, string outputPath)
+        public BuildContext(IApplicationEnvironment appEnv,
+                            ICache cache,
+                            ICacheContextAccessor cacheContextAccessor,
+                            Runtime.Project project,
+                            FrameworkName targetFramework,
+                            string configuration,
+                            string outputPath)
         {
             _project = project;
             _targetFramework = targetFramework;
             _configuration = configuration;
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
-            _applicationHostContext = new ApplicationHostContext(
-                serviceProvider: null,
-                projectDirectory: project.ProjectDirectory,
-                packagesDirectory: null,
-                configuration: configuration,
-                targetFramework: targetFramework,
-                cache: cache,
-                cacheContextAccessor: cacheContextAccessor,
-                namedCacheDependencyProvider: new NamedCacheDependencyProvider());
+
+            _applicationHostContext = GetApplicationHostContext(appEnv, cache, cacheContextAccessor, project, targetFramework, configuration);
         }
 
         public void Initialize(IReport report)
         {
-            _applicationHostContext.DependencyWalker.Walk(_project.Name, _project.Version, _targetFramework);
             ShowDependencyInformation(report);
         }
 
@@ -174,6 +172,49 @@ namespace Microsoft.Framework.PackageManager
                 }
                 report.WriteLine();
             }
+        }
+
+        private ApplicationHostContext GetApplicationHostContext(IApplicationEnvironment appEnv,
+                                                                 ICache cache,
+                                                                 ICacheContextAccessor cacheContextAccessor,
+                                                                 Runtime.Project project,
+                                                                 FrameworkName targetFramework,
+                                                                 string configuration,
+                                                                 bool useRuntimeLoadContextFactory = true)
+        {
+            var cacheKey = Tuple.Create("ApplicationContext", project.Name, configuration, targetFramework);
+
+            IAssemblyLoadContextFactory loadContextFactory = null;
+
+            if (useRuntimeLoadContextFactory)
+            {
+                var runtimeApplicationContext = GetApplicationHostContext(appEnv,
+                                                                          cache,
+                                                                          cacheContextAccessor,
+                                                                          project,
+                                                                          appEnv.RuntimeFramework,
+                                                                          appEnv.Configuration,
+                                                                          useRuntimeLoadContextFactory: false);
+
+                loadContextFactory = runtimeApplicationContext.AssemblyLoadContextFactory;
+            }
+
+            return cache.Get<ApplicationHostContext>(cacheKey, ctx =>
+            {
+                var applicationHostContext = new ApplicationHostContext(serviceProvider: null,
+                                                                        projectDirectory: project.ProjectDirectory,
+                                                                        packagesDirectory: null,
+                                                                        configuration: configuration,
+                                                                        targetFramework: targetFramework,
+                                                                        cache: cache,
+                                                                        cacheContextAccessor: cacheContextAccessor,
+                                                                        namedCacheDependencyProvider: null,
+                                                                        loadContextFactory: loadContextFactory);
+
+                applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, targetFramework);
+
+                return applicationHostContext;
+            });
         }
 
         private static string NormalizeDirectoryPath(string path)
