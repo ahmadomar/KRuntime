@@ -18,6 +18,11 @@ namespace Microsoft.Framework.PackageManager
         private readonly string _outputPath;
         private readonly ApplicationHostContext _applicationHostContext;
 
+        private readonly IServiceProvider _hostServices;
+        private readonly ICache _cache;
+        private readonly ICacheContextAccessor _cacheContextAccessor;
+        private readonly IApplicationEnvironment _appEnv;
+
         public BuildContext(IServiceProvider hostServices,
                             IApplicationEnvironment appEnv,
                             ICache cache,
@@ -32,8 +37,12 @@ namespace Microsoft.Framework.PackageManager
             _configuration = configuration;
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
+            _hostServices = hostServices;
+            _cache = cache;
+            _cacheContextAccessor = cacheContextAccessor;
+            _appEnv = appEnv;
 
-            _applicationHostContext = GetApplicationHostContext(hostServices, appEnv, cache, cacheContextAccessor, project, targetFramework, configuration);
+            _applicationHostContext = GetApplicationHostContext(project, targetFramework, configuration);
         }
 
         public void Initialize(IReport report)
@@ -176,49 +185,43 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private ApplicationHostContext GetApplicationHostContext(IServiceProvider hostServices,
-                                                                 IApplicationEnvironment appEnv,
-                                                                 ICache cache,
-                                                                 ICacheContextAccessor cacheContextAccessor,
-                                                                 Runtime.Project project,
-                                                                 FrameworkName targetFramework,
-                                                                 string configuration,
-                                                                 bool useRuntimeLoadContextFactory = true)
+        private ApplicationHostContext GetApplicationHostContext(Runtime.Project project, FrameworkName targetFramework, string configuration)
         {
             var cacheKey = Tuple.Create("ApplicationContext", project.Name, configuration, targetFramework);
 
-            IAssemblyLoadContextFactory loadContextFactory = null;
-
-            if (useRuntimeLoadContextFactory)
+            return _cache.Get<ApplicationHostContext>(cacheKey, ctx =>
             {
-                var runtimeApplicationContext = GetApplicationHostContext(hostServices,
-                                                                          appEnv,
-                                                                          cache,
-                                                                          cacheContextAccessor,
-                                                                          project,
-                                                                          appEnv.RuntimeFramework,
-                                                                          appEnv.Configuration,
-                                                                          useRuntimeLoadContextFactory: false);
-
-                loadContextFactory = new AssemblyLoadContextFactory(runtimeApplicationContext.ServiceProvider);
-            }
-
-            return cache.Get<ApplicationHostContext>(cacheKey, ctx =>
-            {
-                var applicationHostContext = new ApplicationHostContext(serviceProvider: hostServices,
+                var applicationHostContext = new ApplicationHostContext(serviceProvider: _hostServices,
                                                                         projectDirectory: project.ProjectDirectory,
                                                                         packagesDirectory: null,
                                                                         configuration: configuration,
                                                                         targetFramework: targetFramework,
-                                                                        cache: cache,
-                                                                        cacheContextAccessor: cacheContextAccessor,
+                                                                        cache: _cache,
+                                                                        cacheContextAccessor: _cacheContextAccessor,
                                                                         namedCacheDependencyProvider: null,
-                                                                        loadContextFactory: loadContextFactory);
+                                                                        loadContextFactory: GetRuntimeLoadContextFactory(project));
 
                 applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, targetFramework);
 
                 return applicationHostContext;
             });
+        }
+
+        private IAssemblyLoadContextFactory GetRuntimeLoadContextFactory(Runtime.Project project)
+        {
+            var applicationHostContext = new ApplicationHostContext(_hostServices,
+                                                                    project.ProjectDirectory,
+                                                                    packagesDirectory: null,
+                                                                    configuration: _appEnv.Configuration,
+                                                                    targetFramework: _appEnv.RuntimeFramework,
+                                                                    cache: _cache,
+                                                                    cacheContextAccessor: _cacheContextAccessor,
+                                                                    namedCacheDependencyProvider: null,
+                                                                    loadContextFactory: null);
+
+            applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, _appEnv.RuntimeFramework);
+
+            return new AssemblyLoadContextFactory(applicationHostContext.ServiceProvider);
         }
 
         private static string NormalizeDirectoryPath(string path)
