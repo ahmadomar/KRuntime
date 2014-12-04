@@ -198,7 +198,7 @@ namespace Microsoft.Framework.PackageManager
                                                                         targetFramework: targetFramework,
                                                                         cache: _cache,
                                                                         cacheContextAccessor: _cacheContextAccessor,
-                                                                        namedCacheDependencyProvider: null,
+                                                                        namedCacheDependencyProvider: new NamedCacheDependencyProvider(),
                                                                         loadContextFactory: GetRuntimeLoadContextFactory(project));
 
                 applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, targetFramework);
@@ -216,7 +216,7 @@ namespace Microsoft.Framework.PackageManager
                                                                     targetFramework: _appEnv.RuntimeFramework,
                                                                     cache: _cache,
                                                                     cacheContextAccessor: _cacheContextAccessor,
-                                                                    namedCacheDependencyProvider: null,
+                                                                    namedCacheDependencyProvider: new NamedCacheDependencyProvider(),
                                                                     loadContextFactory: null);
 
             applicationHostContext.DependencyWalker.Walk(project.Name, project.Version, _appEnv.RuntimeFramework);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 
 namespace Microsoft.Framework.Runtime.Roslyn
@@ -9,17 +10,17 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly RoslynCompiler _compiler;
 
         public RoslynProjectReferenceProvider(
-            ICache cache, 
+            ICache cache,
             ICacheContextAccessor cacheContextAccessor,
             INamedCacheDependencyProvider namedCacheProvider,
             IFileWatcher watcher,
             IServiceProvider services)
         {
             _compiler = new RoslynCompiler(
-                cache, 
-                cacheContextAccessor, 
+                cache,
+                cacheContextAccessor,
                 namedCacheProvider,
-                watcher, 
+                watcher,
                 services);
         }
 
@@ -27,18 +28,23 @@ namespace Microsoft.Framework.Runtime.Roslyn
             Project project,
             ILibraryKey target,
             Func<ILibraryExport> referenceResolver,
-            IList<IMetadataReference> outgoingReferences)
+            IList<IMetadataReference> outgoingReferences,
+            Func<IAssemblyLoadContext> assemblyLoadContextResolver = null)
         {
             var export = referenceResolver();
             var incomingReferences = export.MetadataReferences;
             var incomingSourceReferences = export.SourceReferences;
+
+            var assemblyLoadContext = assemblyLoadContextResolver == null ?
+                null : assemblyLoadContextResolver();
 
             var compliationContext = _compiler.CompileProject(
                 project,
                 target,
                 incomingReferences,
                 incomingSourceReferences,
-                outgoingReferences);
+                outgoingReferences,
+                assemblyLoadContext);
 
             if (compliationContext == null)
             {
