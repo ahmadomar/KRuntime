@@ -10,7 +10,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Versioning;
-using System.Text;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 using Microsoft.Framework.Runtime.FileSystem;
 using Microsoft.Framework.Runtime.Infrastructure;
@@ -150,6 +149,8 @@ namespace Microsoft.Framework.Runtime
             _applicationHostContext.AddService(typeof(IFileMonitor), _watcher);
             _applicationHostContext.AddService(typeof(IFileWatcher), _watcher);
 
+            _applicationHostContext.AddService(typeof(ICompilationOptionsProvider), new CompilerOptionsProvider());
+
             if (options.CompilationServerPort.HasValue)
             {
                 // Using this ctor because it works on mono, this is hard coded to ipv4
@@ -169,7 +170,6 @@ namespace Microsoft.Framework.Runtime
 
             CallContextServiceLocator.Locator.ServiceProvider = ServiceProvider;
         }
-
 
         private static string Normalize(string projectDir)
         {

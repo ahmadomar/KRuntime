@@ -1,12 +1,13 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.Framework.Runtime
 {
-    public class CompilerOptions
+    public class CompilerOptions : ICompilerOptions
     {
         public IEnumerable<string> Defines { get; set; }
 
@@ -20,10 +21,12 @@ namespace Microsoft.Framework.Runtime
 
         public bool? Optimize { get; set; }
 
-        public static CompilerOptions Combine(params CompilerOptions[] options)
+        public IDictionary<string, object> CustomOptions { get; }
+            = new Dictionary<string, object>(StringComparer.Ordinal);
+
+        public static CompilerOptions Combine(params ICompilerOptions[] options)
         {
             var result = new CompilerOptions();
-
             foreach (var option in options)
             {
                 // Skip null options
