@@ -12,38 +12,18 @@ namespace Microsoft.Framework.Runtime.Loader
     public abstract class LoadContext : AssemblyLoadContext, IAssemblyLoadContext
     {
         private readonly Dictionary<string, Assembly> _assemblyCache = new Dictionary<string, Assembly>(StringComparer.Ordinal);
-
-        private readonly IAssemblyNeutralInterfaceCache _assemblyNeutralInterfaceCache;
-
-        public LoadContext(IAssemblyNeutralInterfaceCache assemblyNeutralInterfaceCache)
-        {
-            _assemblyNeutralInterfaceCache = assemblyNeutralInterfaceCache;
-        }
-
+        
         protected override Assembly Load(AssemblyName assemblyName)
         {
             var name = assemblyName.Name;
-
-            var assembly = _assemblyNeutralInterfaceCache.GetAssembly(name);
-
-            if (assembly != null)
-            {
-                return assembly;
-            }
-
+            
             // TODO: Make this more efficient
             lock (_assemblyCache)
             {
+                Assembly assembly;
                 if (!_assemblyCache.TryGetValue(name, out assembly))
                 {
                     assembly = LoadAssembly(name);
-
-                    if (assembly != null)
-                    {
-                        _assemblyCache[name] = assembly;
-
-                        ExtractAssemblyNeutralInterfaces(assembly);
-                    }
                 }
 
                 return assembly;
@@ -109,28 +89,6 @@ namespace Microsoft.Framework.Runtime.Loader
         {
 
         }
-
-        private void ExtractAssemblyNeutralInterfaces(Assembly assembly)
-        {
-            // Embedded assemblies end with .dll
-            foreach (var name in assembly.GetManifestResourceNames())
-            {
-                if (name.EndsWith(".dll"))
-                {
-                    var assemblyName = Path.GetFileNameWithoutExtension(name);
-
-                    if (_assemblyNeutralInterfaceCache.IsLoaded(assemblyName))
-                    {
-                        continue;
-                    }
-
-                    var neutralAssemblyStream = assembly.GetManifestResourceStream(name);
-
-                    // Store this assembly in the global cache so that it's shared across all load contexts
-                    _assemblyNeutralInterfaceCache.AddAssembly(assemblyName, LoadStream(neutralAssemblyStream, assemblySymbols: null));
-                }
-            }
-        }
     }
 #else
     public abstract class LoadContext : IAssemblyLoadContext
@@ -139,7 +97,7 @@ namespace Microsoft.Framework.Runtime.Loader
 
         protected string _contextId;
 
-        public LoadContext(IAssemblyNeutralInterfaceCache assemblyNeutralInterfaceCache)
+        public LoadContext()
         {
             _contextId = Guid.NewGuid().ToString();
 
@@ -245,7 +203,7 @@ namespace Microsoft.Framework.Runtime.Loader
 
         private class DefaultLoadContext : LoadContext
         {
-            public DefaultLoadContext() : base(null)
+            public DefaultLoadContext()
             {
                 _contextId = null;
             }

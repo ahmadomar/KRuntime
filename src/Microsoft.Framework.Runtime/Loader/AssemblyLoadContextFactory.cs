@@ -6,15 +6,13 @@ namespace Microsoft.Framework.Runtime.Loader
 {
     public class AssemblyLoadContextFactory : IAssemblyLoadContextFactory
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly IAssemblyLoader _parent;
-        private readonly IAssemblyNeutralInterfaceCache _assemblyNeutralInterfaceCache;
+        private readonly IServiceProvider _serviceProvider;
 
         public AssemblyLoadContextFactory(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _parent = serviceProvider.GetService(typeof(IAssemblyLoaderContainer)) as IAssemblyLoader;
-            _assemblyNeutralInterfaceCache = serviceProvider.GetService(typeof(IAssemblyNeutralInterfaceCache)) as IAssemblyNeutralInterfaceCache;
         }
 
         public IAssemblyLoadContext Create()
@@ -22,7 +20,7 @@ namespace Microsoft.Framework.Runtime.Loader
             var projectAssemblyLoader = (ProjectAssemblyLoader)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(ProjectAssemblyLoader));
             var nugetAsseblyLoader = (NuGetAssemblyLoader)ActivatorUtilities.CreateInstance(_serviceProvider, typeof(NuGetAssemblyLoader));
 
-            return new LibraryAssemblyLoadContext(projectAssemblyLoader, nugetAsseblyLoader, _parent, _assemblyNeutralInterfaceCache);
+            return new LibraryAssemblyLoadContext(projectAssemblyLoader, nugetAsseblyLoader, _parent);
         }
 
         private class LibraryAssemblyLoadContext : LoadContext
@@ -33,9 +31,7 @@ namespace Microsoft.Framework.Runtime.Loader
 
             public LibraryAssemblyLoadContext(ProjectAssemblyLoader projectAssemblyLoader,
                                               NuGetAssemblyLoader nugetAssemblyLoader,
-                                              IAssemblyLoader parent,
-                                              IAssemblyNeutralInterfaceCache assemblyNeutralInterfaceCache) 
-                : base(assemblyNeutralInterfaceCache)
+                                              IAssemblyLoader parent)
             {
                 _projectAssemblyLoader = projectAssemblyLoader;
                 _nugetAssemblyLoader = nugetAssemblyLoader;
@@ -44,9 +40,9 @@ namespace Microsoft.Framework.Runtime.Loader
 
             public override Assembly LoadAssembly(string name)
             {
-                return _projectAssemblyLoader.Load(name, this) ??
-                       _nugetAssemblyLoader.Load(name, this) ??
-                       _parent.Load(name);
+                return _parent.Load(name) ??
+                       _projectAssemblyLoader.Load(name, this) ??
+                       _nugetAssemblyLoader.Load(name, this);
             }
         }
     }
