@@ -104,7 +104,8 @@ namespace Microsoft.Framework.PackageManager
                     var errors = new List<string>();
                     var warnings = new List<string>();
 
-                    var context = new BuildContext(_applicationEnvironment,
+                    var context = new BuildContext(_hostServices,
+                                                   _applicationEnvironment,
                                                    cache,
                                                    cacheContextAccessor,
                                                    project,

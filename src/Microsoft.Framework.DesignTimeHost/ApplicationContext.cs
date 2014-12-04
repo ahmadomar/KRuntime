@@ -13,6 +13,7 @@ using Microsoft.Framework.DesignTimeHost.Models;
 using Microsoft.Framework.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Framework.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Loader;
 using Microsoft.Framework.Runtime.Roslyn;
 using Microsoft.Framework.Runtime.Roslyn.Services;
 using Newtonsoft.Json.Linq;
@@ -825,7 +826,7 @@ namespace Microsoft.Framework.DesignTimeHost
                                                                           _appEnv.RuntimeFramework,
                                                                           useRuntimeLoadContextFactory: false);
 
-                loadContextFactory = runtimeApplicationContext.AssemblyLoadContextFactory;
+                loadContextFactory = new AssemblyLoadContextFactory(runtimeApplicationContext.ServiceProvider);
             }
 
             return _cache.Get<ApplicationHostContext>(cacheKey, ctx =>

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Framework.Runtime;
+using Microsoft.Framework.Runtime.Loader;
 using NuGet;
 
 namespace Microsoft.Framework.PackageManager
@@ -17,7 +18,8 @@ namespace Microsoft.Framework.PackageManager
         private readonly string _outputPath;
         private readonly ApplicationHostContext _applicationHostContext;
 
-        public BuildContext(IApplicationEnvironment appEnv,
+        public BuildContext(IServiceProvider hostServices,
+                            IApplicationEnvironment appEnv,
                             ICache cache,
                             ICacheContextAccessor cacheContextAccessor,
                             Runtime.Project project,
@@ -31,7 +33,7 @@ namespace Microsoft.Framework.PackageManager
             _targetFrameworkFolder = VersionUtility.GetShortFrameworkName(_targetFramework);
             _outputPath = Path.Combine(outputPath, _targetFrameworkFolder);
 
-            _applicationHostContext = GetApplicationHostContext(appEnv, cache, cacheContextAccessor, project, targetFramework, configuration);
+            _applicationHostContext = GetApplicationHostContext(hostServices, appEnv, cache, cacheContextAccessor, project, targetFramework, configuration);
         }
 
         public void Initialize(IReport report)
@@ -174,7 +176,8 @@ namespace Microsoft.Framework.PackageManager
             }
         }
 
-        private ApplicationHostContext GetApplicationHostContext(IApplicationEnvironment appEnv,
+        private ApplicationHostContext GetApplicationHostContext(IServiceProvider hostServices,
+                                                                 IApplicationEnvironment appEnv,
                                                                  ICache cache,
                                                                  ICacheContextAccessor cacheContextAccessor,
                                                                  Runtime.Project project,
@@ -188,7 +191,8 @@ namespace Microsoft.Framework.PackageManager
 
             if (useRuntimeLoadContextFactory)
             {
-                var runtimeApplicationContext = GetApplicationHostContext(appEnv,
+                var runtimeApplicationContext = GetApplicationHostContext(hostServices,
+                                                                          appEnv,
                                                                           cache,
                                                                           cacheContextAccessor,
                                                                           project,
@@ -196,12 +200,12 @@ namespace Microsoft.Framework.PackageManager
                                                                           appEnv.Configuration,
                                                                           useRuntimeLoadContextFactory: false);
 
-                loadContextFactory = runtimeApplicationContext.AssemblyLoadContextFactory;
+                loadContextFactory = new AssemblyLoadContextFactory(runtimeApplicationContext.ServiceProvider);
             }
 
             return cache.Get<ApplicationHostContext>(cacheKey, ctx =>
             {
-                var applicationHostContext = new ApplicationHostContext(serviceProvider: null,
+                var applicationHostContext = new ApplicationHostContext(serviceProvider: hostServices,
                                                                         projectDirectory: project.ProjectDirectory,
                                                                         packagesDirectory: null,
                                                                         configuration: configuration,

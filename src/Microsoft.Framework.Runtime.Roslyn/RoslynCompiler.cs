@@ -146,7 +146,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 try
                 {
-                    var preprocessAssembly = Assembly.Load(project.Name + "!preprocess");
+                    var preprocessAssembly = Assembly.Load(new AssemblyName(project.Name + "!preprocess"));
                     foreach (var preprocessType in preprocessAssembly.ExportedTypes)
                     {
                         if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))
