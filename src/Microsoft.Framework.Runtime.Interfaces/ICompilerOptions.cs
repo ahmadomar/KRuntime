@@ -19,7 +19,5 @@ namespace Microsoft.Framework.Runtime
         bool? WarningsAsErrors { get; }
 
         bool? Optimize { get; }
-
-        IDictionary<string, object> CustomOptions { get; }
     }
 }

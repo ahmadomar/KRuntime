@@ -21,9 +21,6 @@ namespace Microsoft.Framework.Runtime
 
         public bool? Optimize { get; set; }
 
-        public IDictionary<string, object> CustomOptions { get; }
-            = new Dictionary<string, object>(StringComparer.Ordinal);
-
         public static CompilerOptions Combine(params ICompilerOptions[] options)
         {
             var result = new CompilerOptions();
