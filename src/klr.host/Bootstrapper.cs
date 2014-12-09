@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-
 using System;
 using System.IO;
 using System.Linq;
@@ -18,10 +17,13 @@ namespace klr.host
     public class Bootstrapper
     {
         private readonly IAssemblyLoaderContainer _container;
-        
-        public Bootstrapper(IAssemblyLoaderContainer container)
+        private readonly IAssemblyNeutralInterfaceCache _assemblyNeutralInterfaceCache;
+
+        public Bootstrapper(IAssemblyLoaderContainer container, 
+                            IAssemblyNeutralInterfaceCache assemblyNeutralInterfaceCache)
         {
             _container = container;
+            _assemblyNeutralInterfaceCache = assemblyNeutralInterfaceCache;
         }
 
         public Task<int> Main(string[] args)
@@ -77,6 +79,7 @@ namespace klr.host
             serviceProvider.Add(typeof(IAssemblyLoaderContainer), _container);
             serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), LoadContextAccessor.Instance);
             serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
+            serviceProvider.Add(typeof(IAssemblyNeutralInterfaceCache), _assemblyNeutralInterfaceCache, includeInManifest: false);
 
             CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
 

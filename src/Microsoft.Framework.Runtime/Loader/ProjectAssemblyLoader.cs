@@ -4,6 +4,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace Microsoft.Framework.Runtime.Loader
 {

@@ -45,7 +45,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             ILibraryKey target,
             IEnumerable<IMetadataReference> incomingReferences,
             IEnumerable<ISourceReference> incomingSourceReferences,
-            IList<IMetadataReference> outgoingReferences)
+            IList<IMetadataReference> outgoingReferences,
+            IAssemblyLoadContext loadContext)
         {
             var path = project.ProjectDirectory;
             var name = project.Name;
@@ -146,7 +147,8 @@ namespace Microsoft.Framework.Runtime.Roslyn
             {
                 try
                 {
-                    var preprocessAssembly = Assembly.Load(new AssemblyName(project.Name + "!preprocess"));
+                    var preprocessAssembly = loadContext.Load(project.Name + "!preprocess");
+
                     foreach (var preprocessType in preprocessAssembly.ExportedTypes)
                     {
                         if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))
