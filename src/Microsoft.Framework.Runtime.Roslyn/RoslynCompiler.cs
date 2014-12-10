@@ -22,6 +22,7 @@ namespace Microsoft.Framework.Runtime.Roslyn
         private readonly ICache _cache;
         private readonly ICacheContextAccessor _cacheContextAccessor;
         private readonly INamedCacheDependencyProvider _namedDependencyProvider;
+        private readonly IAssemblyLoadContextFactory _loadContextFactory;
         private readonly IFileWatcher _watcher;
         private readonly IServiceProvider _services;
         private readonly ISourceTextService _sourceTextService;
@@ -29,12 +30,14 @@ namespace Microsoft.Framework.Runtime.Roslyn
         public RoslynCompiler(ICache cache,
                               ICacheContextAccessor cacheContextAccessor,
                               INamedCacheDependencyProvider namedDependencyProvider,
+                              IAssemblyLoadContextFactory loadContextFactory,
                               IFileWatcher watcher,
                               IServiceProvider services)
         {
             _cache = cache;
             _cacheContextAccessor = cacheContextAccessor;
             _namedDependencyProvider = namedDependencyProvider;
+            _loadContextFactory = loadContextFactory;
             _watcher = watcher;
             _services = services;
             _sourceTextService = (ISourceTextService)services.GetService(typeof(ISourceTextService));
@@ -142,45 +145,49 @@ namespace Microsoft.Framework.Runtime.Roslyn
 
             var modules = new List<ICompileModule>();
 
-            if (isMainAspect && project.PreprocessSourceFiles.Any())
+            using (var childContext = _loadContextFactory.Create())
             {
-                try
-                {
-                    var preprocessAssembly = Assembly.Load(new AssemblyName(project.Name + "!preprocess"));
-                    foreach (var preprocessType in preprocessAssembly.ExportedTypes)
-                    {
-                        if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))
-                        {
-                            var module = (ICompileModule)ActivatorUtilities.CreateInstance(_services, preprocessType);
-                            modules.Add(module);
-                        }
-                    }
 
-                }
-                catch (Exception ex)
+                if (isMainAspect && project.PreprocessSourceFiles.Any())
                 {
-                    var compilationException = ex.InnerException as RoslynCompilationException;
-
-                    if (compilationException != null)
+                    try
                     {
-                        // Add diagnostics from the precompile step
-                        foreach (var diag in compilationException.Diagnostics)
+                        var preprocessAssembly = childContext.Load(project.Name + "!preprocess");
+                        foreach (var preprocessType in preprocessAssembly.ExportedTypes)
                         {
-                            compilationContext.Diagnostics.Add(diag);
+                            if (preprocessType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ICompileModule)))
+                            {
+                                var module = (ICompileModule)ActivatorUtilities.CreateInstance(_services, preprocessType);
+                                modules.Add(module);
+                            }
                         }
 
-                        Trace.TraceError("[{0}]: Failed loading meta assembly '{1}'", GetType().Name, name);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Trace.TraceError("[{0}]: Failed loading meta assembly '{1}':\n {2}", GetType().Name, name, ex);
+                        var compilationException = ex.InnerException as RoslynCompilationException;
+
+                        if (compilationException != null)
+                        {
+                            // Add diagnostics from the precompile step
+                            foreach (var diag in compilationException.Diagnostics)
+                            {
+                                compilationContext.Diagnostics.Add(diag);
+                            }
+
+                            Trace.TraceError("[{0}]: Failed loading meta assembly '{1}'", GetType().Name, name);
+                        }
+                        else
+                        {
+                            Trace.TraceError("[{0}]: Failed loading meta assembly '{1}':\n {2}", GetType().Name, name, ex);
+                        }
                     }
                 }
-            }
 
-            foreach (var module in modules)
-            {
-                module.BeforeCompile(compilationContext);
+                foreach (var module in modules)
+                {
+                    module.BeforeCompile(compilationContext);
+                }
             }
 
             sw.Stop();
