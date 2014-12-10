@@ -223,7 +223,7 @@ namespace Microsoft.Framework.Runtime.Loader
                 {
                     // Get the relevant load context for the requesting assembly
                     var loadContext = LoadContextAccessor.Instance.GetLoadContext(args.RequestingAssembly);
-                    if (loadContext != null && loadContext != this)
+                    if (loadContext != null && loadContext != this && loadContext != Default)
                     {
                         return loadContext.Load(assemblyName.Name);
                     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using Microsoft.Framework.Runtime.Common.DependencyInjection;
 
@@ -41,9 +42,19 @@ namespace Microsoft.Framework.Runtime.Loader
 
             public override Assembly LoadAssembly(string name)
             {
-                return _defaultContext.Load(name) ??
-                       _projectAssemblyLoader.Load(name, this) ??
-                       _nugetAssemblyLoader.Load(name, this);
+                try
+                {
+                    return _defaultContext.Load(name);
+                }
+#if ASPNET50
+                catch (FileNotFoundException)
+#else
+                catch (FileLoadException)
+#endif
+                {
+                    return _projectAssemblyLoader.Load(name, this) ??
+                           _nugetAssemblyLoader.Load(name, this);
+                }
             }
         }
     }
