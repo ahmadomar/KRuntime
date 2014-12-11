@@ -27,7 +27,7 @@ namespace DependencyAnalyzer.Util
             _appbasePath = Path.GetDirectoryName(environment.ApplicationBasePath);
         }
 
-        public HashSet<string> GetContractDependencies(string projectName)
+        public HashSet<string> GetDependencies(string projectName)
         {
             var usedAssemblies = new HashSet<string>();
 

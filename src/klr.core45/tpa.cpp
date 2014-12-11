@@ -1,5 +1,3 @@
-// tpa.cpp
-
 // This file will be dynamically updated during build to generate a 
 // minimal trusted platform assemblies list
 
@@ -8,17 +6,11 @@
 
 BOOL CreateTpaBase(LPWSTR** ppNames, size_t* pcNames, bool bNative)
 {
-    // MARK: begin tpa list size
-    // updated on UTC 2014/11/20 10:54:24
     const size_t count = 33;
-    // MARK: end tpa list size
-
     LPWSTR* pArray = new LPWSTR[count];
 
     if (bNative)
     {
-        // MARK: begin tpa native image list
-        // updated on UTC 2014/11/20 10:54:24
         pArray[0] = _wcsdup(L"System.Collections.ni.dll");
         pArray[1] = _wcsdup(L"System.ni.dll");
         pArray[2] = _wcsdup(L"mscorlib.ni.dll");
@@ -52,12 +44,9 @@ BOOL CreateTpaBase(LPWSTR** ppNames, size_t* pcNames, bool bNative)
         pArray[30] = _wcsdup(L"System.Reflection.Extensions.ni.dll");
         pArray[31] = _wcsdup(L"System.Text.RegularExpressions.ni.dll");
         pArray[32] = _wcsdup(L"System.Reflection.Primitives.ni.dll");
-        // MARK: end tpa native image list
     }
     else
     {
-        // MARK: begin tpa list
-        // updated on UTC 2014/11/20 10:54:24
         pArray[0] = _wcsdup(L"System.Collections.dll");
         pArray[1] = _wcsdup(L"System.dll");
         pArray[2] = _wcsdup(L"mscorlib.dll");
@@ -91,7 +80,6 @@ BOOL CreateTpaBase(LPWSTR** ppNames, size_t* pcNames, bool bNative)
         pArray[30] = _wcsdup(L"System.Reflection.Extensions.dll");
         pArray[31] = _wcsdup(L"System.Text.RegularExpressions.dll");
         pArray[32] = _wcsdup(L"System.Reflection.Primitives.dll");
-        // MARK: end tpa list
     }
 
     *ppNames = pArray;
@@ -99,7 +87,6 @@ BOOL CreateTpaBase(LPWSTR** ppNames, size_t* pcNames, bool bNative)
 
     return true;
 }
-
 
 BOOL FreeTpaBase(const LPWSTR* values, const size_t count)
 {

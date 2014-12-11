@@ -595,7 +595,7 @@ var MONO_MANAGED_PROJECTS = '${FindAllProjects("klr.mono.managed")}'
         try
         {
             Environment.SetEnvironmentVariable("K_APPBASE", Path.Combine(ROOT, "src", "DependencyAnalyzer"));
-            Exec("cmd", "/C k dpa runtime \"" + KRE_CORECLR_x86_BIN + "\" \"" + dependenciesFile + "\"");
+            Exec("cmd", string.Format("/C k dpa runtime \"{0}\" \"{1}\"", KRE_CORECLR_x86_BIN, dependenciesFile));
         }
         finally
         {

@@ -9,17 +9,17 @@ using NuGet;
 
 namespace DependencyAnalyzer.Commands
 {
-    public class BuildMiniRuntimeCommand
+    public class BuildRuntimeCommand
     {
         private const string KeyRuntime = "Runtime";
 
         private readonly IApplicationEnvironment _environment;
         private readonly IEnumerable<string> _runtimeProjects;
-        private readonly IEnumerable<string> _essentialProjects;
+        private readonly IEnumerable<string> _sdkProjects;
         private readonly string _assemblyFolder;
         private readonly string _outputFile;
 
-        public BuildMiniRuntimeCommand(IApplicationEnvironment env, string assemblyFolder, string outputFile)
+        public BuildRuntimeCommand(IApplicationEnvironment env, string assemblyFolder, string outputFile)
         {
             _environment = env;
 
@@ -33,7 +33,7 @@ namespace DependencyAnalyzer.Commands
             };
 
             // TODO: Unhard coded this?
-            _essentialProjects = new[]
+            _sdkProjects = new[]
             {
                 "Microsoft.Framework.DesignTimeHost",
                 "Microsoft.Framework.PackageManager",
@@ -56,12 +56,12 @@ namespace DependencyAnalyzer.Commands
 
             foreach (var name in _runtimeProjects)
             {
-                dependencies[KeyRuntime].AddRange(finder.GetContractDependencies(name));
+                dependencies[KeyRuntime].AddRange(finder.GetDependencies(name));
             }
 
-            foreach (var name in _essentialProjects)
+            foreach (var name in _sdkProjects)
             {
-                dependencies[name] = finder.GetContractDependencies(name);
+                dependencies[name] = finder.GetDependencies(name);
             }
 
             foreach (var pair in dependencies.Skip(1))

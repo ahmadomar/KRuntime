@@ -60,7 +60,7 @@ namespace DependencyAnalyzer
                 c.HelpOption("-?|-h|-help");
                 c.OnExecute(() =>
                 {
-                    var command = new BuildMiniRuntimeCommand(_environment, assemblyFolder.Value, outputFile.Value);
+                    var command = new BuildRuntimeCommand(_environment, assemblyFolder.Value, outputFile.Value);
 
                     return command.Execute();
                 });
