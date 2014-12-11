@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Framework.Project;
 using Microsoft.Framework.Runtime;
 using NuGet;
 
@@ -33,18 +34,17 @@ namespace DependencyAnalyzer.Util
 
             var projectFolder = Path.Combine(_appbasePath, projectName);
 
-            // TODO: hardcoded?
             var framework = VersionUtility.ParseFrameworkName("aspnetcore50");
 
             var hostContext = new ApplicationHostContext(
                                 serviceProvider: null,
                                 projectDirectory: projectFolder,
                                 packagesDirectory: null,
-                                configuration: "Debug",     // TODO: hardcoded?
+                                configuration: "Debug",
                                 targetFramework: framework,
                                 cache: _cache,
                                 cacheContextAccessor: _accessor,
-                                namedCacheDependencyProvider: new NamedCacheDependencyProvider());
+                                namedCacheDependencyProvider: null);
 
             hostContext.DependencyWalker.Walk(hostContext.Project.Name, hostContext.Project.Version, framework);
 
@@ -87,7 +87,8 @@ namespace DependencyAnalyzer.Util
                     continue;
                 }
 
-                foreach (var reference in PEFileHelper.GetReferences(path))
+                var assemblyInformation = new AssemblyInformation(path, null);
+                foreach (var reference in assemblyInformation.GetDependencies())
                 {
                     var newPath = Path.Combine(_assemblyFolder, reference + ".dll");
 

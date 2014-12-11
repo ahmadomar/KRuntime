@@ -1,7 +1,9 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DependencyAnalyzer.Util;
 using Microsoft.Framework.Runtime;
@@ -69,19 +71,19 @@ namespace DependencyAnalyzer.Commands
                 pair.Value.ExceptWith(dependencies[KeyRuntime]);
             }
 
-            using (var output = SafeTextWriter.CreateOutput(_outputFile))
+            using (var output = _outputFile != null ? new StreamWriter(_outputFile) : Console.Out)
             {
                 foreach (var root in dependencies)
                 {
-                    output.Writer.WriteLine("-" + root.Key);
+                    output.WriteLine("-" + root.Key);
                     foreach (var contract in root.Value)
                     {
-                        output.Writer.WriteLine(contract);
+                        output.WriteLine(contract);
                     }
                 }
 
-                output.Writer.Write("-");
-                output.Writer.Flush();
+                output.Write("-");
+                output.Flush();
             }
 
             return 0;
